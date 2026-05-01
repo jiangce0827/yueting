@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.ArtistMapper">
+
+    <resultMap id="ArtistWithIdentitiesMap" type="artistWithIdentitiesVO">
+        <id property="artistId" column="artist_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="artistName" column="artist_name"/>
+        <result property="artistAvatarUrl" column="artist_avatar_url"/>
+        <result property="artistCoverUrl" column="artist_cover_url"/>
+        <result property="gender" column="gender"/>
+        <result property="language" column="language"/>
+        <result property="artistBio" column="artist_bio"/>
+        <result property="artistDescription" column="artist_description"/>
+        <collection property="identities" ofType="string">
+            <result column="identity_name"/>
+        </collection>
+    </resultMap>
+    <update id="updateArtistByUserId">
+        UPDATE artist
+        SET artist_name        = #{artistName},
+            artist_avatar_url  = #{artistAvatarUrl},
+            artist_cover_url   = #{artistCoverUrl},
+            gender             = #{gender},
+            language           = #{language},
+            artist_bio         = #{artistBio},
+            artist_description = #{artistDescription}
+        WHERE user_id = #{userId}
+    </update>
+    <select id="selectArtistWithIdentitiesOneByUserId" resultMap="ArtistWithIdentitiesMap">
+        SELECT a.*,
+               it.name AS identity_name
+        FROM artist a
+                 LEFT JOIN
+             artist_identity ai ON a.artist_id = ai.artist_id
+                 LEFT JOIN
+             identity_type it ON ai.identity_type_id = it.identity_type_id
+        WHERE a.user_id = #{userId}
+    </select>
+    <resultMap id="ArtistPageByAdminVOMap" type="ArtistPageByAdminVO">
+        <id property="artistId" column="artist_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="artistName" column="artist_name"/>
+        <result property="artistAvatarUrl" column="artist_avatar_url"/>
+        <result property="artistCoverUrl" column="artist_cover_url"/>
+        <result property="gender" column="gender"/>
+        <result property="language" column="language"/>
+        <result property="artistBio" column="artist_bio"/>
+        <result property="artistDescription" column="artist_description"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="idCard" column="id_card"/>
+        <result property="realName" column="real_name"/>
+        <collection property="identities" ofType="string">
+            <result column="identity_name"/>
+        </collection>
+    </resultMap>
+
+    <select id="pageArtistByAdmin" resultMap="ArtistPageByAdminVOMap">
+        select a.artist_id,
+        a.user_id,
+        u.nickname user_name,
+        a.artist_name,
+        a.artist_avatar_url,
+        a.artist_cover_url,
+        a.gender,
+        a.language,
+        a.artist_bio,
+        a.artist_description,
+        a.real_name,
+        a.id_card,
+        a.created_at,
+        a.status,
+        it.name AS identity_name
+
+        from artist a
+        left join user u on a.user_id = u.user_id
+        left join artist_identity ai on a.artist_id = ai.artist_id
+        left join identity_type it on ai.identity_type_id = it.identity_type_id
+        <where>
+            <if test="artistPageDTO.artistName != null and artistPageDTO.artistName != ''">
+                and a.artist_name like concat('%',#{artistPageDTO.artistName},'%')
+            </if>
+            <if test="artistPageDTO.gender != null and artistPageDTO.gender != -1">
+                and a.gender = #{artistPageDTO.gender}
+            </if>
+            <if test="artistPageDTO.language != null and artistPageDTO.language != -1">
+                and a.language = #{artistPageDTO.language}
+            </if>
+            <if test="artistPageDTO.status != null and artistPageDTO.status != -1">
+                and a.status = #{artistPageDTO.status}
+            </if>
+            <if test="artistPageDTO.idCard != null">
+                and a.id_card = #{artistPageDTO.idCard}
+            </if>
+            <if test="artistPageDTO.realName != null and artistPageDTO.realName != ''">
+                and a.real_name like concat('%',#{artistPageDTO.realName},'%')
+
+            </if>
+        </where>
+    </select></mapper>

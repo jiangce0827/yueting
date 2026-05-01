@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.SongApplicationMapper">
+
+    <insert id="insertBatch" useGeneratedKeys="true">
+        insert into song_application(application_id, artist_id, song_type, song_name, song_url, language, tag_ids, singer_ids,lyricist_ids,composer_ids,duration, lyrics, album_id, applied_at, status) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.applicationId}, #{item.artistId}, #{item.songType}, #{item.songName}, #{item.songUrl}, #{item.language}, #{item.tagIds},#{item.singerIds},#{item.lyricistIds},#{item.composerIds}, #{item.duration}, #{item.lyrics}, #{item.albumId}, #{item.appliedAt},#{item.status})
+        </foreach>
+    </insert>
+    <select id="pageMusicReview" resultType="com.jiangce.yueting.domain.vo.SongApplicationVO">
+        select * from song_application sa
+        <where>
+                 <if test="songApplicationPageDTO.artistId != null">
+                     and sa.artist_id = #{songApplicationPageDTO.artistId}
+                 </if>
+                 <if test="songApplicationPageDTO.songName != null and songApplicationPageDTO.songName != ''">
+                     and sa.song_name like concat('%',#{songApplicationPageDTO.songName},'%')
+                 </if>
+                 <if test="songApplicationPageDTO.status != null and songApplicationPageDTO.status != -1">
+                     and sa.status = #{songApplicationPageDTO.status}
+                 </if>
+        </where>
+        order by sa.applied_at desc
+    </select>
+</mapper>

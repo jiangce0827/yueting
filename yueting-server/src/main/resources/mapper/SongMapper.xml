@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.SongMapper">
+
+    <sql id="SongBaseVO">
+        s.song_id,
+        s.song_name,
+        s.duration,
+        s.album_id,
+        s.create_at,
+        s.status,
+        a.album_name       AS album_name,
+        a.cover_url        AS coverUrl,
+        s.play_count,
+        GROUP_CONCAT(DISTINCT art.artist_id ORDER BY sa.artist_id DESC) AS artist_ids,
+        GROUP_CONCAT( DISTINCT art.artist_name ORDER BY sa.artist_id DESC SEPARATOR ',') AS artist_names
+    </sql>
+
+    <sql id="SongWithDetail">
+        s.song_id,
+        s.song_name,
+        s.duration,
+        s.album_id,
+        s.play_count,
+        s.lyrics,
+        s.like_count,
+        s.create_at,
+        a.album_name                                                                             AS album_name,
+        a.cover_url                                                                              AS coverUrl,
+        -- 歌手信息（role_type=0）
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN art.artist_id END)                 AS artist_ids,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN art.artist_name END SEPARATOR ',') AS artist_names,
+        -- 作词人（role_type=1）
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 1 THEN art.artist_id END)                 AS lyricist_ids,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 1 THEN art.artist_name END SEPARATOR
+                    ',')                                                                        AS lyricist_names,
+        -- 作曲人（role_type=2）
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 2 THEN art.artist_id END)                 AS composer_ids,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 2 THEN art.artist_name END SEPARATOR
+                    ',')
+    </sql>
+
+    <select id="getHotSongsByArtistId" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM (SELECT DISTINCT song_id
+        FROM song_artist
+        WHERE artist_id = #{artistId}
+        AND role_type = 0) AS target_songs
+        INNER JOIN song s ON target_songs.song_id = s.song_id
+        INNER JOIN song_artist sa ON s.song_id = sa.song_id AND sa.role_type = 0
+        INNER JOIN artist art ON sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        WHERE s.status = 0
+        GROUP BY s.song_id
+        ORDER BY s.play_count DESC
+    </select>
+
+
+    <select id="selectSongsByAlbumId" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        inner join song_artist sa on s.song_id = sa.song_id and sa.role_type = 0
+        inner join artist art on sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        WHERE s.album_id = #{id}
+        and s.status = 0
+        GROUP BY s.song_id
+        ORDER BY s.create_at DESC
+    </select>
+    <select id="selectSongsByAlbumIdForArtist" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        inner join song_artist sa on s.song_id = sa.song_id and sa.role_type = 0
+        inner join artist art on sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        WHERE s.album_id = #{albumId}
+        GROUP BY s.song_id
+        ORDER BY s.create_at DESC
+    </select>
+    <select id="selectSoaringListByYesterday" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        INNER JOIN song_artist sa ON s.song_id = sa.song_id AND sa.role_type = 0
+        INNER JOIN artist art ON sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        LEFT JOIN song_daily_play_count sdpc ON s.song_id = sdpc.song_id
+            AND sdpc.play_date &gt;= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+        WHERE s.status = 0
+        GROUP BY s.song_id
+        ORDER BY COALESCE(SUM(sdpc.play_count), 0) DESC
+        LIMIT 0,100
+    </select>
+    <select id="selectHotListBy7Days" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        INNER JOIN song_artist sa ON s.song_id = sa.song_id AND sa.role_type = 0
+        INNER JOIN artist art ON sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        LEFT JOIN song_daily_play_count sdpc ON s.song_id = sdpc.song_id
+            AND sdpc.play_date &gt;= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        WHERE s.status = 0
+        GROUP BY s.song_id
+        ORDER BY COALESCE(SUM(sdpc.play_count), 0) DESC
+        LIMIT 0,100
+    </select>
+    <select id="selectSongsByPlaylistId" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        from song_playlist sp
+        inner join song s on sp.song_id = s.song_id and sp.playlist_id = #{id}
+        inner join song_artist sa on s.song_id = sa.song_id and sa.role_type = 0
+        inner join artist art on sa.artist_id = art.artist_id
+        inner join album a on s.album_id = a.album_id
+        WHERE s.status = 0
+        GROUP BY s.song_id
+        ORDER BY s.play_count DESC
+    </select>
+
+    <select id="selectSongsByKeyword" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        from song s
+        inner join song_artist sa on s.song_id = sa.song_id and sa.role_type = 0
+        inner join artist art on sa.artist_id = art.artist_id
+        inner join album a on s.album_id = a.album_id
+        where song_name like concat('%', #{keyword}, '%')
+        and s.status = 0
+        GROUP BY s.song_id
+        ORDER BY s.play_count
+        DESC
+    </select>
+    <select id="selectWithDetailBySongId" resultType="com.jiangce.yueting.domain.vo.SongWithDetail">
+        SELECT
+        <include refid="SongWithDetail"/>
+        FROM song s
+        inner join song_artist sa on s.song_id = sa.song_id
+        inner join artist art on sa.artist_id = art.artist_id
+        inner join album a on s.album_id = a.album_id
+        WHERE s.song_id = #{id}
+        and s.status = 0
+        GROUP BY s.song_id
+    </select>
+    <select id="selectWithDetailBySongIdIncludeDeleted" resultType="com.jiangce.yueting.domain.vo.SongWithDetail">
+        SELECT
+        <include refid="SongWithDetail"/>
+        , s.status
+        FROM song s
+        inner join song_artist sa on s.song_id = sa.song_id
+        inner join artist art on sa.artist_id = art.artist_id
+        inner join album a on s.album_id = a.album_id
+        WHERE s.song_id = #{id}
+        GROUP BY s.song_id
+    </select>
+    <select id="searchSongByLyrics" resultType="com.jiangce.yueting.domain.vo.SongWithDetail">
+        SELECT
+        <include refid="SongWithDetail"/>
+        from song s
+        inner join song_artist sa on s.song_id = sa.song_id and sa.role_type = 0
+        inner join artist art on sa.artist_id = art.artist_id
+        inner join album a on s.album_id = a.album_id
+        where s.lyrics like concat('%', #{keyword}, '%')
+        and s.status = 0
+        GROUP BY s.song_id
+        ORDER BY s.play_count
+        DESC
+    </select>
+    <select id="pageMusicWithDetail" resultType="com.jiangce.yueting.domain.vo.SongWithDetail">
+        SELECT
+        s.song_id,
+        s.song_name,
+        s.duration,
+        s.album_id,
+        s.lyrics,
+        s.like_count,
+        s.play_count,
+        s.create_at,
+        a.album_name,
+        a.cover_url AS coverUrl,
+        s.status,
+        sa.artist_ids,
+        sa.artist_names,
+        sa.lyricist_names,
+        sa.composer_names
+        FROM song s
+        INNER JOIN album a ON s.album_id = a.album_id
+        INNER JOIN (
+        SELECT
+        sa.song_id,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN a.artist_id END) AS artist_ids,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN a.artist_name END) AS artist_names,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 1 THEN a.artist_name END) AS lyricist_names,
+        GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 2 THEN a.artist_name END) AS composer_names
+        FROM song_artist sa
+        INNER JOIN artist a ON sa.artist_id = a.artist_id
+        GROUP BY sa.song_id
+        ) sa ON s.song_id = sa.song_id
+        <where>
+            <if test="songPageDTO.songName != null and songPageDTO.songName != ''">
+                AND s.song_name LIKE CONCAT('%', #{songPageDTO.songName}, '%')
+            </if>
+            <if test="songPageDTO.artistName != null and songPageDTO.artistName != ''">
+                AND EXISTS (
+                SELECT 1
+                FROM song_artist sa2
+                INNER JOIN artist a2 ON sa2.artist_id = a2.artist_id
+                WHERE sa2.song_id = s.song_id
+                AND a2.artist_name LIKE CONCAT('%', #{songPageDTO.artistName}, '%')
+                )
+            </if>
+            <if test="songPageDTO.status != null and songPageDTO.status != -1">
+                AND s.status = #{songPageDTO.status}
+            </if>
+        </where>
+    </select>
+    <select id="selectNewListByHot" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        INNER JOIN song_artist sa ON s.song_id = sa.song_id AND sa.role_type = 0
+        INNER JOIN artist art ON sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        LEFT JOIN song_daily_play_count sdpc ON s.song_id = sdpc.song_id
+            AND sdpc.play_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        WHERE s.status = 0
+        AND s.create_at >= #{startTime}
+        GROUP BY s.song_id
+        ORDER BY COALESCE(SUM(sdpc.play_count), 0) DESC
+        LIMIT 0,100
+    </select>
+    <select id="selectSongsByIds" resultType="com.jiangce.yueting.domain.vo.SongBaseVO">
+        SELECT
+        <include refid="SongBaseVO"/>
+        FROM song s
+        INNER JOIN song_artist sa ON s.song_id = sa.song_id AND sa.role_type = 0
+        INNER JOIN artist art ON sa.artist_id = art.artist_id
+        INNER JOIN album a ON s.album_id = a.album_id
+        WHERE s.status = 0
+        AND s.song_id IN
+        <foreach item="songId" collection="songIds" separator="," open="(" close=")" index="">
+            #{songId}
+        </foreach>
+    </select>
+    <update id="addPlayCountByMusic">
+        update song
+        set play_count = play_count + #{inc}
+        WHERE song_id = #{songId}
+    </update>
+</mapper>

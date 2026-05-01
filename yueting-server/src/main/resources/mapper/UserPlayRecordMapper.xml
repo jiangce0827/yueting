@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.UserPlayRecordMapper">
+
+    <insert id="insertPlayRecord">
+        INSERT INTO user_play_record (user_id, song_id, play_time)
+        VALUES (#{userId}, #{songId}, #{playTime})
+    </insert>
+
+    <select id="selectUserPlayRanking" resultType="com.jiangce.yueting.domain.vo.UserPlayRankingVO">
+        SELECT
+            play_counts.songId AS songId,
+            s.song_name AS songName,
+            al.cover_url AS coverUrl,
+            play_counts.playCount AS playCount,
+            artist_info.artistNames AS artistNames,
+            artist_info.artistIds AS artistIds
+        FROM (
+            SELECT upr.song_id AS songId, COUNT(*) AS playCount
+            FROM user_play_record upr
+            <where>
+                upr.user_id = #{userId}
+                <if test="startTime != null">
+                    AND upr.play_time >= #{startTime}
+                </if>
+            </where>
+            GROUP BY upr.song_id
+        ) play_counts
+        LEFT JOIN song s ON play_counts.songId = s.song_id
+        LEFT JOIN album al ON s.album_id = al.album_id
+        LEFT JOIN (
+            SELECT sa.song_id,
+                   GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN art.artist_name END SEPARATOR '/') AS artistNames,
+                   GROUP_CONCAT(DISTINCT CASE WHEN sa.role_type = 0 THEN art.artist_id END SEPARATOR ',') AS artistIds
+            FROM song_artist sa
+            LEFT JOIN artist art ON sa.artist_id = art.artist_id
+            GROUP BY sa.song_id
+        ) artist_info ON play_counts.songId = artist_info.song_id
+        ORDER BY play_counts.playCount DESC
+        LIMIT 10
+    </select>
+
+</mapper>

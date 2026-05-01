@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.ArtistIdentityApplicationMapper">
+
+
+    <select id="pageArtistIdentityApplication" resultType="com.jiangce.yueting.domain.vo.ArtistIdentityApplicationVO">
+        select aia.artist_identity_application_id,
+               aia.artist_id,
+               aia.identity_type,
+               aia.file_type,
+               aia.file_name,
+               aia.file_url,
+               aia.file_content,
+               aia.introduction,
+               aia.rejection_reason,
+               aia.reviewed_by,
+               aia.reviewed_at,
+               aia.applied_at,
+               aia.status,
+               a.artist_name
+        from artist_identity_application aia
+        left join artist a on aia.artist_id = a.artist_id
+        <where>
+            <if test="artistApplicationIdentityPageDTO.artistName != null and artistApplicationIdentityPageDTO.artistName != ''">
+                and a.artist_name like concat('%',#{artistApplicationIdentityPageDTO.artistName},'%')
+            </if>
+            <if test="artistApplicationIdentityPageDTO.identityType != null and artistApplicationIdentityPageDTO.identityType != -1">
+                and aia.identity_type = #{artistApplicationIdentityPageDTO.identityType}
+            </if>
+            <if test="artistApplicationIdentityPageDTO.status != null and artistApplicationIdentityPageDTO.status != -1">
+                and aia.status = #{artistApplicationIdentityPageDTO.status}
+            </if>
+        </where>
+    </select>
+</mapper>

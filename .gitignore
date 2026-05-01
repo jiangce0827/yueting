@@ -1,0 +1,36 @@
+# ==================== 根目录忽略文件 ====================
+
+# 环境变量文件（包含敏感信息）
+**/.env
+**/.env.local
+**/.env.dev
+**/.env.prod
+
+# IDE 配置
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 构建产物
+**/target/
+**/dist/
+**/node_modules/
+**/build/
+
+# 临时文件
+*.log
+*.tmp
+
+# 本地存储的媒体文件（如果有）
+uploads/
+
+# AI 编程助手配置文件
+AGENTS.md
+CLAUDE.md

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.SongArtistMapper">
+
+    <insert id="insertBatch">
+        insert into song_artist(song_id, artist_id, role_type) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.songId}, #{item.artistId}, #{item.roleType})
+        </foreach>
+    </insert>
+    <delete id="deleteBySongIds">
+        delete from song_artist where song_id in
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

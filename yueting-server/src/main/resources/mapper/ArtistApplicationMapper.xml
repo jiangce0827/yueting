@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.ArtistApplicationMapper">
+
+
+    <select id="pageArtistApplication" resultType="com.jiangce.yueting.domain.vo.ArtistApplicationVO">
+        select a.application_id,
+        a.user_id,
+        u.nickname user_name,
+        u.phone,
+        u.email,
+        a.apply_type,
+        a.claimed_artist_id,
+        a.artist_avatar_url,
+        a.artist_cover_url,
+        a.artist_name,
+        a.gender,
+        a.language,
+        a.artist_bio,
+        a.real_name,
+        a.id_card,
+        a.back,
+        a.front,
+        a.half_body,
+        a.reviewed_by,
+        a.rejection_reason,
+        a.applied_at,
+        a.reviewed_at,
+        a.status
+        from artist_application a
+        left join user u on a.user_id = u.user_id
+        <where>
+            <if test="artistApplicationPageDTO.nickname != null and artistApplicationPageDTO.nickname != ''">
+                and u.nickname like concat('%',#{artistApplicationPageDTO.nickname},'%')
+            </if>
+            <if test="artistApplicationPageDTO.phone != null and artistApplicationPageDTO.phone != ''">
+                and u.phone like concat('%',#{artistApplicationPageDTO.phone},'%')
+            </if>
+            <if test="artistApplicationPageDTO.email != null and artistApplicationPageDTO.email != ''">
+                and u.email like concat('%',#{artistApplicationPageDTO.email},'%')
+            </if>
+            <if test="artistApplicationPageDTO.applyType != null and artistApplicationPageDTO.applyType != -1">
+                and a.apply_type = #{artistApplicationPageDTO.applyType}
+            </if>
+            <if test="artistApplicationPageDTO.status != null and artistApplicationPageDTO.status != -1">
+                and a.status = #{artistApplicationPageDTO.status}
+            </if>
+        </where>
+    </select>
+</mapper>

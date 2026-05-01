@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.UserMapper">
+
+
+    <select id="selectUserByKeyword" resultType="com.jiangce.yueting.domain.vo.UserBaseVO">
+        select u.user_id,
+               u.email,
+               u.nickname,
+               u.avatar_url,
+               u.gender,
+               u.signature,
+               u.listen_count,
+               u.experience,
+               u.following_count,
+               u.follower_count,
+               u.birthday,
+               u.user_type,
+               u.password_status,
+               u.privacy_allow_messages,
+               u.privacy_show_listening_habits
+        from user u
+        where u.nickname like concat('%', #{keyword}, '%')
+    </select>
+    <update id="addFollowingCount">
+        UPDATE user SET following_count = following_count + 1 WHERE user_id = #{userId}
+    </update>
+
+    <update id="subtractFollowingCount">
+        UPDATE user SET following_count = GREATEST(following_count - 1, 0) WHERE user_id = #{userId}
+    </update>
+
+    <update id="addFollowerCount">
+        UPDATE user SET follower_count = follower_count + 1 WHERE user_id = #{userId}
+    </update>
+
+    <update id="subtractFollowerCount">
+        UPDATE user SET follower_count = GREATEST(follower_count - 1, 0) WHERE user_id = #{userId}
+    </update>
+</mapper>

@@ -1,0 +1,32 @@
+# Yueting 基础配置文件
+# 所有环境共享的基础配置
+
+spring:
+  # 激活的配置文件（dev: 开发环境, local: 本地环境）
+  profiles:
+    active: local
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      # 单个文件最大大小（音乐文件可能较大）
+      max-file-size: 30MB
+      # 请求最大大小（包含多个文件）
+      max-request-size: 100MB
+
+# 服务器配置
+server:
+  # 服务端口（Spring Boot 默认 8080）
+  port: 8080
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  # Mapper XML 文件路径（MyBatis 映射文件存放位置）
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类包路径（用于别名扫描）
+  type-aliases-package: com.jiangce.yueting.domain
+  configuration:
+    # SQL 日志输出实现（StdOutImpl 表示输出到控制台）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 下划线转驼峰（数据库 column_name 转 Java fieldName）
+    map-underscore-to-camel-case: true

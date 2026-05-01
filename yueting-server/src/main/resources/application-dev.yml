@@ -1,0 +1,114 @@
+# Yueting 开发环境配置文件
+# 环境变量格式: ${ENV_VAR}
+# 需要通过 .env.dev 文件或系统环境变量提供所有敏感值
+
+spring:
+  # 数据库配置
+  datasource:
+    # JDBC 连接 URL（包含数据库地址、端口、库名及参数）
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:yueting}?allowMultiQueries=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    # 数据库用户名
+    username: ${DB_USERNAME:root}
+    # 数据库密码（必填）
+    password: ${DB_PASSWORD}
+    # 数据库驱动类名
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # 邮件服务配置
+  mail:
+    # SMTP 服务器地址（QQ 邮箱）
+    host: smtp.qq.com
+    # 邮箱用户名（必填）
+    username: ${MAIL_USERNAME}
+    # 邮箱授权码（必填，不是登录密码）
+    password: ${MAIL_PASSWORD}
+    # 邮件编码
+    default-encoding: UTF-8
+    # 邮件协议（smtps 启用 SSL）
+    protocol: smtps
+    properties:
+      mail:
+        smtp:
+          # 启用 SSL 加密
+          ssl:
+            enable: true
+          # 启用身份认证
+          auth: true
+          # 启用 STARTTLS（加密传输）
+          starttls:
+            enable: true
+            required: true
+          # 连接超时时间(ms)
+          connectiontimeout: 5000
+          # 读取超时时间(ms)
+          timeout: 5000
+          # 写入超时时间(ms)
+          writetimeout: 5000
+    # SMTP 端口（465 为 SSL 端口）
+    port: 465
+
+  # Redis 配置
+  data:
+    redis:
+      # Redis 服务器地址
+      host: ${REDIS_HOST:localhost}
+      # Redis 端口
+      port: ${REDIS_PORT:6379}
+      # Redis 数据库编号（默认 0-15，选 5）
+      database: ${REDIS_DATABASE:5}
+      # Redis 密码（无密码则留空）
+      password: ${REDIS_PASSWORD}
+
+  # SQL 初始化配置
+  sql:
+    init:
+      # 初始化模式（never: 不初始化, always: 每次启动初始化）
+      mode: never
+
+  # AI 服务配置
+  ai:
+    openai:
+      # API 基础地址（阿里云 DashScope 兼容地址）
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      # API 密钥（必填）
+      api-key: ${DASHSCOPE_API_KEY}
+      chat:
+        options:
+          # AI 模型名称
+          model: qwen3.5-397b-a17b
+          # 生成温度参数（0-1，越低越确定性，越高越有创意）
+          temperature: 0.1
+
+# Yueting 业务配置
+yueting:
+  # JWT 配置
+  jwt:
+    # JWT 签名密钥（至少 256 位，建议 512 位）
+    secret: ${JWT_SECRET}
+
+  # 阿里云 OSS 配置
+  alioss:
+    # AccessKey ID（RAM 用户访问密钥）
+    access-key-id: ${OSS_ACCESS_KEY_ID}
+    # AccessKey Secret
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
+    # OSS 存储桶名称
+    bucket-name: ${OSS_BUCKET_NAME}
+    # OSS 端点地址（区域节点）
+    endpoint: ${OSS_ENDPOINT}
+    # OSS 访问 URL（公网访问地址）
+    url: ${OSS_URL}
+
+  # 图片存储配置
+  image:
+    # 存储类型（local: 本地存储, oss: 阿里云 OSS）
+    storage-type: local
+    # 本地存储路径
+    local-path: ${IMAGE_LOCAL_PATH}
+    # 本地图片访问 URL 前缀
+    local-url-prefix: /api/web/common/image
+
+  # 歌曲存储配置
+  song:
+    # 歌曲文件本地存储路径
+    path: ${SONG_LOCAL_PATH}

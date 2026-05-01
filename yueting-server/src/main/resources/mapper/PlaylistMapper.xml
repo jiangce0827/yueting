@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jiangce.yueting.mapper.PlaylistMapper">
+    <update id="batchUpdateSongCounts">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE playlist
+            SET song_count = song_count - #{item.count}
+            WHERE playlist_id = #{item.playlistId}
+        </foreach>
+    </update>
+
+    <select id="selectPlaylistWithDetail" resultType="com.jiangce.yueting.domain.vo.PlaylistWithUser">
+        SELECT p.playlist_id AS playlistId,
+               p.playlist_name AS playlistName,
+               u.user_id AS userId,
+               u.nickname AS userName,
+               p.cover_url AS coverUrl,
+               p.description,
+               p.created_at AS createdAt,
+               GROUP_CONCAT(DISTINCT t.tag_id ORDER BY t.tag_id) AS tagIds,
+               GROUP_CONCAT(DISTINCT t.name ORDER BY t.tag_id)   AS tagNames
+        FROM playlist p
+                 INNER JOIN user u ON p.user_id = u.user_id
+                 LEFT JOIN playlist_tag pt ON p.playlist_id = pt.playlist_id
+                 LEFT JOIN tag t ON pt.tag_id = t.tag_id
+        WHERE p.playlist_id = #{id}
+        GROUP BY p.playlist_id
+    </select>
+    <select id="selectPlaylistByTag" resultType="com.jiangce.yueting.domain.vo.PlaylistWithUser">
+        SELECT
+        p.playlist_id,
+        p.playlist_name,
+        u.user_id,
+        u.nickname user_name,
+        p.cover_url,
+        p.description,
+        p.created_at
+        <if test="tagId != null">
+            FROM playlist_tag pt
+            INNER JOIN playlist p ON pt.playlist_id = p.playlist_id
+            INNER JOIN user u ON p.user_id = u.user_id
+            WHERE pt.tag_id = #{tagId}
+        </if>
+        <if test="tagId == null">
+            FROM playlist p
+            INNER JOIN user u ON p.user_id = u.user_id
+            where p.is_default = 0 and p.user_id != 1
+        </if>
+        ORDER BY p.play_count DESC
+
+    </select>
+    <select id="selectPlaylistByName" resultType="com.jiangce.yueting.domain.vo.PlaylistWithUser">
+        SELECT p.playlist_id,
+               p.playlist_name,
+               u.user_id,
+               u.nickname user_name,
+               p.cover_url,
+               p.description,
+               p.created_at
+        FROM playlist p
+                 INNER JOIN user u ON p.user_id = u.user_id
+        WHERE playlist_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY play_count DESC
+    </select>
+
+    <select id="getPlaylistSongCounts" resultType="com.jiangce.yueting.domain.dto.PlaylistSongCount">
+        SELECT playlist_id AS playlistId, COUNT(song_id) AS count
+        FROM song_playlist
+        WHERE song_id IN
+        <foreach item='songId' collection='songIds' open='(' separator=',' close=')'>
+        #{songId}
+        </foreach>
+        GROUP BY playlist_id
+    </select>
+</mapper>
